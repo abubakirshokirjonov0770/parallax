@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Zumrad Oʻrmon — 3D parallax sayohat</title>
+    <style>
+        :root {
+            --bg: #04120c;
+            --ink: #eaf7ec;
+            --muted: #9dbfa9;
+            --lime: #b7f171;
+            --gold: #f4d98a;
+            color-scheme: dark;
+            box-sizing: border-box;
+            padding-top: env(safe-area-inset-top, 0px);
+            padding-bottom: env(safe-area-inset-bottom, 0px)
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0
+        }
+
+        html {
+            scroll-padding-top: env(safe-area-inset-top, 0px);
+            background: var(--bg)
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--ink);
+            font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none
+        }
+
+        .bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            z-index: 60;
+            background: linear-gradient(90deg, var(--lime), var(--gold));
+            transform: scaleX(0);
+            transform-origin: 0 50%
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: calc(14px + env(safe-area-inset-top, 0px)) 5vw 14px;
+            background: linear-gradient(rgba(4, 18, 12, .65), transparent);
+            color: #fff
+        }
+
+        .logo {
+            font-weight: 900;
+            letter-spacing: .3em
+        }
+
+        .logo i {
+            color: var(--lime);
+            font-style: normal
+        }
+
+        nav {
+            display: flex;
+            gap: clamp(12px, 3vw, 30px);
+            font-size: .9rem
+        }
+
+        nav a {
+            opacity: .8
+        }
+
+        nav a:hover {
+            opacity: 1;
+            color: var(--lime)
+        }
+
+        .track {
+            position: relative
+        }
+
+        .stick {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow: hidden
+        }
+
+        /* HERO */
+        .sky {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, #0c2f35 0%, #2f6f69 36%, #9fd3a8 60%, #f6e3a1 80%, #fff1c2 100%)
+        }
+
+        .sun {
+            position: absolute;
+            left: 50%;
+            top: 44%;
+            width: 46vmin;
+            height: 46vmin;
+            margin: -23vmin 0 0 -23vmin;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fffbe0 0 22%, rgba(255, 235, 160, .9) 30%, rgba(255, 220, 120, .35) 55%, transparent 72%);
+            will-change: transform
+        }
+
+        .sun::before {
+            content: "";
+            position: absolute;
+            inset: -70%;
+            background: repeating-conic-gradient(rgba(255, 240, 170, .22) 0 6deg, transparent 6deg 18deg);
+            -webkit-mask: radial-gradient(circle, #000 10%, transparent 62%);
+            mask: radial-gradient(circle, #000 10%, transparent 62%);
+            animation: spin 70s linear infinite
+        }
+
+        @keyframes spin {
+            to {
+                rotate: 360deg
+            }
+        }
+
+        .L {
+            position: absolute;
+            left: -6%;
+            width: 112%;
+            bottom: 0;
+            transform-origin: 50% 100%;
+            will-change: transform
+        }
+
+        .L svg {
+            display: block;
+            width: 100%;
+            height: 100%
+        }
+
+        .L::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: -16%;
+            height: 44%;
+            background: linear-gradient(transparent, rgba(205, 240, 220, .2), transparent);
+            animation: drift 14s ease-in-out infinite alternate;
+            pointer-events: none
+        }
+
+        @keyframes drift {
+            from {
+                translate: -4% 0
+            }
+
+            to {
+                translate: 4% 0
+            }
+        }
+
+        .trk {
+            position: absolute;
+            bottom: 0;
+            width: 9vw;
+            height: 108%;
+            background: repeating-linear-gradient(90deg, #0a1a10 0 6px, #183420 6px 14px, #0d2215 14px 20px);
+            box-shadow: inset 0 0 40px #000;
+            will-change: transform
+        }
+
+        .trk.l {
+            left: -1vw;
+            transform-origin: 0 100%
+        }
+
+        .trk.r {
+            right: -1vw;
+            transform-origin: 100% 100%
+        }
+
+        .ht {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-content: center;
+            justify-items: center;
+            text-align: center;
+            padding: 0 6vw;
+            will-change: transform, opacity;
+            z-index: 6
+        }
+
+        .tag {
+            letter-spacing: .4em;
+            text-transform: uppercase;
+            font-size: .78rem;
+            color: #fff6cf;
+            margin-bottom: 16px;
+            animation: rise 1s .2s both
+        }
+
+        h1,
+        .ht h2 {
+            font-size: clamp(2.8rem, 10vw, 8rem);
+            line-height: .98;
+            font-weight: 900;
+            letter-spacing: -.03em;
+            color: #fff;
+            text-shadow: 0 8px 50px rgba(3, 30, 20, .7)
+        }
+
+        h1 {
+            animation: rise 1s .4s both
+        }
+
+        h1 span,
+        .ht h2 span {
+            background: linear-gradient(90deg, var(--lime), var(--gold));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: none
+        }
+
+        .sub {
+            margin-top: 20px;
+            max-width: 44ch;
+            color: #f1f8e8;
+            font-size: clamp(1rem, 2vw, 1.25rem);
+            text-shadow: 0 2px 20px rgba(0, 0, 0, .6);
+            animation: rise 1s .6s both
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(30px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .dark {
+            position: absolute;
+            inset: 0;
+            background: var(--bg);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 7
+        }
+
+        .hint {
+            position: absolute;
+            bottom: 3vh;
+            left: 50%;
+            translate: -50% 0;
+            z-index: 8;
+            font-size: .8rem;
+            letter-spacing: .3em;
+            text-transform: uppercase;
+            color: #fff;
+            animation: bob 1.8s ease-in-out infinite
+        }
+
+        @keyframes bob {
+            50% {
+                transform: translateY(8px)
+            }
+        }
+
+        /* TUNNEL */
+        .tun {
+            perspective: 900px;
+            perspective-origin: 50% 55%;
+            background: linear-gradient(180deg, #0a2a1e 0%, #1a5239 44%, #07170f 45%, #030c08 100%)
+        }
+
+        .tun::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(55% 38% at 50% 45%, rgba(200, 245, 190, .35), transparent 70%);
+            pointer-events: none
+        }
+
+        .world {
+            position: absolute;
+            inset: 0;
+            transform-style: preserve-3d
+        }
+
+        .tr {
+            position: absolute;
+            left: 50%;
+            bottom: -8vh;
+            height: 150vh;
+            background: repeating-linear-gradient(90deg, #071008 0 5px, #1f361d 5px 12px, #0f1d10 12px 18px);
+            box-shadow: inset 0 0 30px #000;
+            will-change: transform, opacity
+        }
+
+        .shaft {
+            position: absolute;
+            top: -10%;
+            width: 11vw;
+            height: 120%;
+            background: linear-gradient(rgba(255, 244, 190, .3), transparent 75%);
+            transform: skewX(-18deg);
+            filter: blur(7px);
+            animation: sh 7s ease-in-out infinite alternate;
+            pointer-events: none
+        }
+
+        @keyframes sh {
+            from {
+                opacity: .25
+            }
+
+            to {
+                opacity: .9
+            }
+        }
+
+        .cap {
+            position: absolute;
+            left: 50%;
+            top: 46%;
+            width: min(92vw, 760px);
+            text-align: center;
+            opacity: 0;
+            z-index: 5;
+            pointer-events: none;
+            will-change: transform, opacity
+        }
+
+        .cap h2 {
+            font-size: clamp(2.6rem, 9vw, 6.5rem);
+            font-weight: 900;
+            letter-spacing: -.03em;
+            line-height: 1;
+            color: var(--gold);
+            text-shadow: 0 6px 40px #000
+        }
+
+        .cap p {
+            margin-top: 12px;
+            font-size: clamp(1rem, 2.2vw, 1.35rem);
+            color: #eaf7ec;
+            text-shadow: 0 2px 18px #000
+        }
+
+        .ff {
+            position: absolute;
+            border-radius: 50%;
+            background: #e9ff9a;
+            box-shadow: 0 0 12px 4px rgba(200, 255, 120, .8);
+            animation: fly var(--d) ease-in-out var(--l) infinite alternate;
+            z-index: 4;
+            pointer-events: none
+        }
+
+        @keyframes fly {
+            0% {
+                transform: translate(0, 0);
+                opacity: .2
+            }
+
+            50% {
+                opacity: 1
+            }
+
+            100% {
+                transform: translate(60px, -90px);
+                opacity: .3
+            }
+        }
+
+        /* SECTIONS */
+        .sec {
+            position: relative;
+            overflow: hidden;
+            padding: 22vh 6vw
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2
+        }
+
+        .eyebrow {
+            color: var(--lime);
+            letter-spacing: .3em;
+            text-transform: uppercase;
+            font-size: .78rem;
+            font-weight: 700
+        }
+
+        h2.t {
+            font-size: clamp(2rem, 6vw, 4.2rem);
+            line-height: 1.05;
+            margin: 12px 0 14px;
+            letter-spacing: -.02em
+        }
+
+        .lead {
+            color: var(--muted);
+            max-width: 56ch
+        }
+
+        .s3 {
+            background: linear-gradient(var(--bg), #0b2a1c 50%, var(--bg))
+        }
+
+        .bgtxt {
+            position: absolute;
+            top: 6%;
+            left: 0;
+            white-space: nowrap;
+            font-size: clamp(9rem, 30vw, 26rem);
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -.04em;
+            color: rgba(183, 241, 113, .07);
+            pointer-events: none;
+            will-change: transform
+        }
+
+        .cols {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 28px;
+            margin-top: 70px;
+            align-items: start
+        }
+
+        .col {
+            display: grid;
+            gap: 28px;
+            will-change: transform
+        }
+
+        .card {
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(183, 241, 113, .2);
+            border-radius: 24px;
+            padding: 30px;
+            backdrop-filter: blur(8px);
+            transition: transform .35s, border-color .35s, box-shadow .35s
+        }
+
+        .card:hover {
+            transform: translateY(-8px) rotate(-1deg);
+            border-color: var(--lime);
+            box-shadow: 0 24px 60px rgba(120, 230, 80, .18)
+        }
+
+        .card .e {
+            font-size: 2.3rem;
+            display: block;
+            margin-bottom: 8px
+        }
+
+        .card h3 {
+            font-size: 1.2rem
+        }
+
+        .card p {
+            color: var(--muted);
+            font-size: .95rem;
+            margin-top: 6px
+        }
+
+        .lf {
+            position: absolute;
+            font-size: 1.7rem;
+            pointer-events: none;
+            animation: sway 5s ease-in-out infinite alternate;
+            will-change: transform;
+            z-index: 1
+        }
+
+        @keyframes sway {
+            from {
+                rotate: -30deg
+            }
+
+            to {
+                rotate: 30deg
+            }
+        }
+
+        .night {
+            min-height: 150vh;
+            background: linear-gradient(#030a14 0%, #07201c 58%, #031008 100%);
+            display: grid;
+            justify-items: center;
+            align-content: start;
+            padding-top: 24vh
+        }
+
+        .moon {
+            position: absolute;
+            right: 14%;
+            top: 10%;
+            width: clamp(90px, 16vw, 200px);
+            aspect-ratio: 1;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #fff, #e6ecff 50%, #9aa8d8);
+            box-shadow: 0 0 120px rgba(190, 210, 255, .55);
+            will-change: transform
+        }
+
+        .nt {
+            position: relative;
+            z-index: 5;
+            text-align: center;
+            max-width: 720px
+        }
+
+        .btn {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 15px 34px;
+            border-radius: 999px;
+            font-weight: 700;
+            color: #10300a;
+            background: linear-gradient(135deg, var(--lime), var(--gold));
+            box-shadow: 0 12px 36px rgba(160, 240, 90, .35);
+            transition: transform .25s
+        }
+
+        .btn:hover {
+            transform: translateY(-3px) scale(1.03)
+        }
+
+        footer {
+            position: relative;
+            z-index: 2;
+            background: #020a06;
+            color: var(--muted);
+            text-align: center;
+            font-size: .88rem;
+            padding: 36px 6vw calc(36px + env(safe-area-inset-bottom, 0px))
+        }
+
+        @media (max-width:560px) {
+            nav a:nth-child(n+3) {
+                display: none
+            }
+        }
+
+        @media (prefers-reduced-motion:reduce) {
+            * {
+                animation: none !important
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bar" id="bar"></div>
+    <header><a class="logo" href="#s1">ORMON<i>.</i></a>
+        <nav><a href="#s1">Tong</a><a href="#s2">Chuqurlik</a><a href="#s3">Sirlar</a><a href="#s4">Tun</a></nav>
+    </header>
+
+    <section class="track" id="s1" style="height:460vh">
+        <div class="stick">
+            <div class="sky"></div>
+            <div class="sun" id="sun"></div>
+            <div id="hl"></div>
+            <div class="trk l" id="tkL"></div>
+            <div class="trk r" id="tkR"></div>
+            <div class="ht" id="t1"><span class="tag">Zumrad oʻrmon · 3D parallax</span>
+                <h1>Oʻrmon <span>uygʻonmoqda</span></h1>
+                <p class="sub">Sahifani pastga aylantiring va daraxtlar orasiga sho‘ng‘ing.</p>
+            </div>
+            <div class="ht" id="t2" style="opacity:0">
+                <h2>Chuqurroq <span>kiring…</span></h2>
+                <p class="sub">Quyosh nurlari barglar orasidan sizib tushmoqda.</p>
+            </div>
+            <div class="dark" id="dk"></div>
+            <div class="hint" id="hint">Aylantiring ↓</div>
+        </div>
+    </section>
+
+    <section class="track" id="s2" style="height:520vh">
+        <div class="stick tun" id="tun">
+            <div class="shaft" style="left:12%"></div>
+            <div class="shaft" style="left:38%;animation-delay:-2s"></div>
+            <div class="shaft" style="left:62%;animation-delay:-4s"></div>
+            <div class="shaft" style="left:84%;animation-delay:-1s"></div>
+            <div class="world" id="world"></div>
+            <div class="cap">
+                <h2>Chuqurlik</h2>
+                <p>Yorugʻlik daraxt tojlari orasidan sizib oʻtadi.</p>
+            </div>
+            <div class="cap">
+                <h2>Sukunat</h2>
+                <p>Bu yerda har bir qadam moxga singib ketadi.</p>
+            </div>
+            <div class="cap">
+                <h2>Hayot</h2>
+                <p>Minglab jonzot sizni kuzatib turibdi.</p>
+            </div>
+            <div id="ffs"></div>
+        </div>
+    </section>
+
+    <section class="sec px s3" id="s3">
+        <div class="bgtxt" data-x="0.5">ORMON ORMON</div>
+        <div id="leaves"></div>
+        <div class="wrap">
+            <span class="eyebrow">Sirlar</span>
+            <h2 class="t">Yashil olamning oltita siri</h2>
+            <p class="lead">Ustunlar turli tezlikda siljiydi — aylantirib koʻring.</p>
+            <div class="cols">
+                <div class="col" data-speed="0.55">
+                    <div class="card"><span class="e">🌳</span>
+                        <h3>Yerning oʻpkasi</h3>
+                        <p>Daraxtlar kislorod ishlab chiqarib, havoni tozalaydi.</p>
+                    </div>
+                    <div class="card"><span class="e">🌡️</span>
+                        <h3>Tabiiy salqin</h3>
+                        <p>Tojlar soya beradi va atrofni salqin saqlaydi.</p>
+                    </div>
+                </div>
+                <div class="col" data-speed="-0.45">
+                    <div class="card"><span class="e">🍄</span>
+                        <h3>Yashirin tarmoq</h3>
+                        <p>Zamburugʻ ildizlari daraxtlarni bir-biriga bogʻlab, ozuqa almashtiradi.</p>
+                    </div>
+                    <div class="card"><span class="e">🍃</span>
+                        <h3>Sukunat</h3>
+                        <p>Oʻrmon shovqini odamni tinchlantiradi va charchoqni yoʻqotadi.</p>
+                    </div>
+                </div>
+                <div class="col" data-speed="0.8">
+                    <div class="card"><span class="e">🦌</span>
+                        <h3>Hayot uyi</h3>
+                        <p>Son-sanoqsiz hayvon, qush va hasharotlar oʻrmonda yashaydi.</p>
+                    </div>
+                    <div class="card"><span class="e">💧</span>
+                        <h3>Suv qoʻrigʻi</h3>
+                        <p>Ildizlar tuproqni ushlab, suvni filtrlaydi.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="sec px night" id="s4">
+        <div class="moon" data-speed="-0.7"></div>
+        <div id="nl"></div>
+        <div class="nt"><span class="eyebrow">Tun</span>
+            <h2 class="t">Oʻrmonni birga asraymiz</h2>
+            <p class="lead" style="margin:0 auto">Har bir daraxt — kelajakka tikilgan umid.</p><a class="btn"
+                href="mailto:hello@ormon.uz">Tashabbusga qoʻshilish</a>
+        </div>
+    </section>
+    <footer>© 2026 Zumrad Oʻrmon. Tabiatni asrang.</footer>
+
+    <script>
+        (function () {
+            var $ = function (s) { return document.querySelector(s) }, cl = function (v, a, b) { return Math.min(b === undefined ? 1 : b, Math.max(a === undefined ? 0 : a, v)) };
+            var A = matchMedia('(prefers-reduced-motion:reduce)').matches ? .3 : 1, seed = 7;
+            function R() { return (seed = seed * 16807 % 2147483647) / 2147483647 }
+            function forest(n, h0, h1, c) {
+                var d = 'M0 400V385H1600V400Z', i, k, x, h, w, yb, hw;
+                for (i = 0; i < n; i++) {
+                    x = R() * 1700 - 50; h = h0 + R() * (h1 - h0); w = h * .42;
+                    for (k = 0; k < 4; k++) { yb = 400 - h * .08 - k * h * .2; hw = w * (1 - k * .17) / 2; d += 'M' + (x - hw) + ' ' + yb + 'L' + x + ' ' + (yb - h * .42) + 'L' + (x + hw) + ' ' + yb + 'Z' }
+                    d += 'M' + (x - 3) + ' 400V' + (400 - h * .12) + 'H' + (x + 3) + 'V400Z'
+                }
+                return '<svg viewBox="0 0 1600 400" preserveAspectRatio="xMidYMax slice"><path fill="' + c + '" d="' + d + '"/></svg>'
+            }
+            function layer(box, cfg) { var e = document.createElement('div'); e.className = 'L'; e.style.height = cfg[4]; e.innerHTML = forest(cfg[0], cfg[1], cfg[2], cfg[3]); box.appendChild(e); return e }
+
+            /* hero layers: n,hMin,hMax,color,height,scaleK,shiftVh,mousePx */
+            var hl = [[50, 60, 140, '#5f9d86', '52vh', .15, 2, 6], [38, 90, 190, '#4a8570', '60vh', .4, 6, 12], [26, 140, 260, '#336b56', '70vh', .9, 14, 22], [16, 200, 340, '#1d4a39', '82vh', 1.8, 26, 36], [8, 300, 420, '#08201a', '96vh', 3.4, 45, 56]]
+                .map(function (c) { return { e: layer($('#hl'), c), k: c[5], t: c[6], m: c[7] } });
+
+            /* tunnel */
+            var RANGE = 4400, TRAVEL = 14000 * A, world = $('#world'), trs = [], i, e, ffs = $('#ffs');
+            for (i = 0; i < 46; i++) {
+                e = document.createElement('div'); e.className = 'tr'; e.style.width = (50 + R() * 130) + 'px'; world.appendChild(e);
+                trs.push({ e: e, x: (i % 2 ? 1 : -1) * (170 + R() * 1150), z: R() * RANGE, w: parseFloat(e.style.width) })
+            }
+            function fireflies(box, n) {
+                for (var j = 0; j < n; j++) {
+                    var f = document.createElement('span'), s = 3 + R() * 4; f.className = 'ff';
+                    f.style.cssText = 'left:' + R() * 100 + '%;top:' + (30 + R() * 65) + '%;width:' + s + 'px;height:' + s + 'px;--d:' + (4 + R() * 6) + 's;--l:-' + R() * 8 + 's'; box.appendChild(f)
+                }
+            }
+            fireflies(ffs, 34);
+            var caps = [].slice.call(document.querySelectorAll('.cap'));
+
+            /* parallax elements */
+            var px = [];
+            function reg(el, s, x) { var sec = el.closest('.px'); if (sec) px.push({ el: el, s: sec, sp: s, x: x, t: 0, h: 0 }) }
+            [].forEach.call(document.querySelectorAll('[data-speed]'), function (el) { reg(el, parseFloat(el.dataset.speed)) });
+            reg($('.bgtxt'), 0, .5);
+            var lv = $('#leaves'), em = ['🍃', '🍂', '🌿', '🍁'];
+            for (i = 0; i < 16; i++) {
+                e = document.createElement('span'); e.className = 'lf'; e.textContent = em[i % 4];
+                e.style.cssText = 'left:' + R() * 96 + '%;top:' + R() * 92 + '%;animation-delay:-' + R() * 5 + 's'; lv.appendChild(e);
+                reg(e, (i % 2 ? 1 : -1) * (.7 + R() * .9))
+            }
+            [[24, 60, 140, '#16423f', '50vh', .1], [16, 100, 200, '#0d2e2c', '60vh', .25], [10, 170, 300, '#061a18', '72vh', .45], [6, 260, 400, '#020b0a', '86vh', .7]].forEach(function (c) { var l = layer($('#nl'), c); reg(l, c[5]) });
+            $('#nl').style.cssText = 'position:absolute;inset:0';
+            fireflies($('#s4'), 26);
+
+            var vh = innerHeight, sy = scrollY, mx = 0, my = 0, gx = 0, gy = 0, run = false, s1 = $('#s1'), s2 = $('#s2'), sun = $('#sun'), t1 = $('#t1'), t2 = $('#t2'), dk = $('#dk'), tL = $('#tkL'), tR = $('#tkR'), tun = $('#tun'), bar = $('#bar'), hint = $('#hint');
+            function measure() { vh = innerHeight; px.forEach(function (o) { o.t = o.s.offsetTop; o.h = o.s.offsetHeight }) }
+            function prog(el) { return cl((sy - el.offsetTop) / (el.offsetHeight - vh)) }
+            function render() {
+                var p = prog(s1), p2 = prog(s2), q, o, z, d, op;
+                hl.forEach(function (l) { l.e.style.transform = 'translate3d(' + (-mx * l.m).toFixed(1) + 'px,' + (p * l.t * A * vh / 100).toFixed(1) + 'px,0) scale(' + (1 + p * l.k * A).toFixed(3) + ')' });
+                sun.style.transform = 'translate3d(' + (-mx * 10) + 'px,' + (p * 30 * vh / 100) + 'px,0) scale(' + (1 + p * .5) + ')'; sun.style.opacity = 1 - cl(p / .7);
+                t1.style.opacity = 1 - cl(p / .2); t1.style.transform = 'translate3d(0,' + (-p * 18) + 'vh,0) scale(' + (1 + p * 2.4 * A) + ')';
+                q = cl((p - .3) / .18); o = cl((p - .68) / .12); t2.style.opacity = q * (1 - o); t2.style.transform = 'scale(' + (.5 + q * .5 + o * 1.6 * A) + ')';
+                tL.style.transform = 'translate3d(' + (-p * 42 * A) + 'vw,0,0) scale(' + (1 + p * 1.8 * A) + ')'; tR.style.transform = 'translate3d(' + (p * 42 * A) + 'vw,0,0) scale(' + (1 + p * 1.8 * A) + ')';
+                dk.style.opacity = cl((p - .8) / .2); hint.style.opacity = 1 - cl(p / .06);
+                tun.style.perspectiveOrigin = (50 + mx * 10) + '% ' + (55 + my * 8) + '%';
+                world.style.transform = 'translate3d(' + (-mx * 50) + 'px,0,0) rotateY(' + (mx * -3) + 'deg)';
+                trs.forEach(function (t) {
+                    z = ((t.z + p2 * TRAVEL) % RANGE + RANGE) % RANGE - 4000; d = (z + 4000) / RANGE;
+                    op = Math.min(1, d * 5) * (z > 0 ? 1 - z / 400 : 1);
+                    t.e.style.transform = 'translate3d(' + (t.x - t.w / 2) + 'px,0,' + z.toFixed(0) + 'px)'; t.e.style.opacity = op.toFixed(2)
+                });
+                caps.forEach(function (c, k) { var l = p2 * 3 - k, v = cl(Math.sin(Math.PI * cl(l)) * 2.4); c.style.opacity = v; c.style.transform = 'translate(-50%,-50%) scale(' + (.55 + cl(l) * .9) + ')' });
+                px.forEach(function (o) {
+                    var pp = (o.t - sy) + o.h / 2 - vh / 2;
+                    o.el.style.transform = o.x ? 'translate3d(' + (pp * o.x * -1).toFixed(1) + 'px,0,0)' : 'translate3d(0,' + (-pp * o.sp * A).toFixed(1) + 'px,0)'
+                });
+                bar.style.transform = 'scaleX(' + cl(sy / (document.documentElement.scrollHeight - vh)) + ')'
+            }
+            function loop() {
+                sy += (scrollY - sy) * .12; mx += (gx - mx) * .06; my += (gy - my) * .06; render();
+                if (Math.abs(scrollY - sy) > .3 || Math.abs(gx - mx) > .002 || Math.abs(gy - my) > .002) requestAnimationFrame(loop); else run = false
+            }
+            function kick() { if (!run) { run = true; requestAnimationFrame(loop) } }
+            addEventListener('scroll', kick, { passive: true });
+            addEventListener('pointermove', function (ev) { gx = ev.clientX / innerWidth * 2 - 1; gy = ev.clientY / innerHeight * 2 - 1; kick() });
+            addEventListener('resize', function () { measure(); kick() });
+            addEventListener('load', function () { measure(); kick() });
+            measure(); sy = scrollY; render();
+        })();
+    </script>
+</body>
+
+</html>
